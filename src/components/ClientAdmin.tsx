@@ -9,11 +9,13 @@ import { v4 as uuidv4 } from "uuid";
 
 export default function ClientAdmin() {
     const products = useSelector((state: RootState) => state.products.products);
+
     const { send } = useWebSocket();
 
     const [title, setTitle] = useState("");
     const [price, setPrice] = useState<string>("20");
     const [stock, setStock] = useState<string>("10");
+    const [error, setError] = useState<string>("");
 
     const add = () => {
         if (!title.trim()) {
@@ -27,7 +29,13 @@ export default function ClientAdmin() {
             stock: Number(stock) || 0,
         };
 
-        // send ADD to server; mock will broadcast SYNC
+        const duplicate = products.some((product) => newProduct.title.toLowerCase() === product.title.toLowerCase());
+        if (duplicate) {
+            setError("Item already exists");
+            return;
+        }
+
+        // send ADD to server
         send({ type: "ADD", payload: newProduct });
         setTitle("");
         setPrice("20");
@@ -41,7 +49,10 @@ export default function ClientAdmin() {
                     className="border p-2 col-span-1 sm:col-span-2"
                     placeholder="Title"
                     value={title}
-                    onChange={(e) => setTitle(e.target.value)}
+                    onChange={(e) => {
+                        setTitle(e.target.value);
+                        setError("");
+                    }}
                 />
                 <input
                     className="border p-2"
@@ -57,6 +68,8 @@ export default function ClientAdmin() {
                     </button>
                 </div>
             </div>
+
+            <p className="text-red-600">{error}</p>
 
             <p className="text-sm text-gray-600 mb-4">
                 Edit or delete products below to update all clients in realtime.
