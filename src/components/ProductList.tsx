@@ -1,9 +1,10 @@
 "use client";
 
 import { useDispatch, useSelector } from "react-redux";
-import { updateProduct, deleteProduct } from "../store/productsSlice";
+import { updateProduct, deleteProduct } from "@/store/productsSlice";
 import EditableProduct from "./EditableProduct";
 import { RootState } from "@/store/store";
+import { useWebSocket } from "@/hooks/useWebSocket";
 
 interface ProductsListProps {
     admin?: boolean;
@@ -13,6 +14,8 @@ interface ProductsListProps {
 const ProductsList: React.FC<ProductsListProps> = ({ admin, send }) => {
     const products = useSelector((state: RootState) => state.products.products);
     const dispatch = useDispatch();
+
+    useWebSocket(); // This will initialize WS server connection
 
     if (!admin) {
         // Read-only render

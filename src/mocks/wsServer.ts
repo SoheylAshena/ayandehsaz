@@ -87,7 +87,6 @@ function broadcastSyncAll() {
       ⚜  Initialize Mock server  ⚜     
 ╘═══════════════════════════════════════════════════════════════════════╛
 */
-
 export function initMockServer() {
     // return if windows is undefined or server is intialized before
     if (typeof window === "undefined") return;

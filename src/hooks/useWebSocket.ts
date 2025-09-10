@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useCallback } from "react";
+import { useEffect, useRef } from "react";
 import { useDispatch } from "react-redux";
 import { WS_URL, BC_NAME, STORAGE_KEY } from "@/mocks/wsServer";
 import { setProducts } from "@/store/productsSlice";
@@ -29,98 +29,106 @@ export function useWebSocket() {
         let mounted = true;
         let reconnectTimer: number | undefined;
 
-        /*
-        ╒═══════════════════════════════════════════════════════════════════════╕
-              ⚜  Connetct to WS server  ⚜     
-        ╘═══════════════════════════════════════════════════════════════════════╛
-        */
+        /*   ⋆⋆⋆  Configure broadcast channel  ⋆⋆⋆
+        ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+        function configureChannel() {
+            try {
+                bcRef.current = new BroadcastChannel(BC_NAME);
+                bcRef.current.onmessage = (event) => {
+                    const msg = event.data;
+                    if (msg && msg.type === "SYNC" && Array.isArray(msg.payload)) {
+                        dispatch(setProducts(msg.payload));
+                    }
+                };
+            } catch (e) {
+                bcRef.current = null;
+                // fallback handled by storage events in server
+                window.addEventListener("storage", (event) => {
+                    if (event.key === STORAGE_KEY && event.newValue) {
+                        const parsed = JSON.parse(event.newValue);
+                        dispatch(setProducts(parsed));
+                    }
+                });
+            }
+        }
+
+        /*   ⋆⋆⋆  Configure WebSocket mock server  ⋆⋆⋆
+        ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+        function counfigureWebSocket() {
+            const ws = new WebSocket(WS_URL);
+            wsRef.current = ws;
+
+            ws.onopen = () => {
+                ws.send(JSON.stringify({ type: "SYNC_REQUEST" }));
+            };
+
+            ws.onmessage = (event) => {
+                try {
+                    const msg = JSON.parse(event.data);
+                    if (msg.type === "SYNC") {
+                        dispatch(setProducts(msg.payload));
+                    }
+                } catch (error) {
+                    console.error("ws parse", error);
+                }
+            };
+
+            ws.onclose = () => {
+                wsRef.current = null;
+                if (!mounted) return;
+                reconnectTimer = window.setTimeout(() => connect(), 500);
+            };
+
+            ws.onerror = (error) => {
+                console.warn("WebSocket error", error);
+            };
+        }
+
+        /*   ⋆⋆⋆  Error handler for Connecion errors  ⋆⋆⋆
+        ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+        function handleWSError(error: unknown) {
+            console.error("WebSocket constructor failed", error);
+            if (mounted) {
+                reconnectTimer = window.setTimeout(() => connect(), 500);
+            }
+        }
+
+        /*   ⋆⋆⋆  Connect to WS server  ⋆⋆⋆
+        ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
         const connect = async () => {
             // If WS server is ready, this resolves true
             const ready = await waitForMockReady();
-
             if (!mounted) return;
+            if (!ready) console.warn("Mock WS server not ready; Reconnectiong...");
 
-            if (!ready) {
-                console.warn("Mock WS server not ready; Reconnectiong...");
-            }
-
-            /*   ⋆⋆⋆  Title  ⋆⋆⋆
-            ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
             try {
-                // Listen to BroadcastChannel (syncs across tabs)
-                try {
-                    bcRef.current = new BroadcastChannel(BC_NAME);
-                    bcRef.current.onmessage = (event) => {
-                        const msg = event.data;
-                        if (msg && msg.type === "SYNC" && Array.isArray(msg.payload)) {
-                            dispatch(setProducts(msg.payload));
-                        }
-                    };
-                } catch (e) {
-                    bcRef.current = null;
-                    // fallback handled by storage events in server
-                    window.addEventListener("storage", (event) => {
-                        if (event.key === STORAGE_KEY && event.newValue) {
-                            const parsed = JSON.parse(event.newValue);
-                            dispatch(setProducts(parsed));
-                        }
-                    });
-                }
-
-                const ws = new WebSocket(WS_URL);
-                wsRef.current = ws;
-
-                ws.onopen = () => {
-                    ws.send(JSON.stringify({ type: "SYNC_REQUEST" }));
-                };
-
-                ws.onmessage = (event) => {
-                    try {
-                        const msg = JSON.parse(event.data);
-                        if (msg.type === "SYNC") {
-                            dispatch(setProducts(msg.payload));
-                        }
-                    } catch (error) {
-                        console.error("ws parse", error);
-                    }
-                };
-
-                ws.onclose = () => {
-                    wsRef.current = null;
-                    if (!mounted) return;
-                    reconnectTimer = window.setTimeout(() => connect(), 500);
-                };
-
-                ws.onerror = (error) => {
-                    console.warn("WebSocket error", error);
-                };
+                configureChannel();
+                counfigureWebSocket();
             } catch (error) {
-                console.error("WebSocket constructor failed", error);
-                if (mounted) {
-                    reconnectTimer = window.setTimeout(() => connect(), 500);
-                }
+                handleWSError(error);
             }
         };
 
+        /*
+        ╒═══════════════════════════════════════════════════════════════════════╕
+              ⚜  Main function call  ⚜     
+        ╘═══════════════════════════════════════════════════════════════════════╛
+        */
         connect();
 
         return () => {
             mounted = false;
-
-            if (wsRef.current) {
-                wsRef.current.close();
-            }
-
-            if (bcRef.current) {
-                bcRef.current.close();
-            }
-
-            if (reconnectTimer) {
-                clearTimeout(reconnectTimer);
-            }
+            if (wsRef.current) wsRef.current.close();
+            if (bcRef.current) bcRef.current.close();
+            if (reconnectTimer) clearTimeout(reconnectTimer);
         };
     }, [dispatch]);
 
+    /*
+    ╒═══════════════════════════════════════════════════════════════════════╕
+          ⚜  Send data to WS server   ⚜     
+    ╘═══════════════════════════════════════════════════════════════════════╛
+    */
     const send = (data: any) => {
         const ws = wsRef.current;
         if (ws && ws.readyState === WebSocket.OPEN) {

@@ -2,10 +2,11 @@
 
 import { useState } from "react";
 import { useSelector } from "react-redux";
-import type { RootState } from "@/store/store";
+import { v4 as uuidv4 } from "uuid";
+
 import ProductsList from "@/components/ProductList";
 import { useWebSocket } from "@/hooks/useWebSocket";
-import { v4 as uuidv4 } from "uuid";
+import type { RootState } from "@/store/store";
 
 export default function ClientAdmin() {
     const products = useSelector((state: RootState) => state.products.products);

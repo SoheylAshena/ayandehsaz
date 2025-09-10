@@ -7,6 +7,11 @@ interface ClientProviderProps {
     children: React.ReactNode;
 }
 const ClientProviders: React.FC<ClientProviderProps> = ({ children }) => {
+    /*
+    ╒═══════════════════════════════════════════════════════════════════════╕
+          ⚜  Initialize WS Server  ⚜     
+    ╘═══════════════════════════════════════════════════════════════════════╛
+    */
     try {
         initMockServer();
     } catch (error) {
