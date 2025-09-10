@@ -18,6 +18,7 @@ let products: Product[] = [
 let server: Server | null = null;
 let Channel: BroadcastChannel | null = null;
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const connectedSockets = new Set<any>();
 
 /*
@@ -62,8 +63,9 @@ function syncSockets() {
     Array.from(connectedSockets).forEach((socket) => {
         try {
             socket.send(msg);
-        } catch (e) {
+        } catch (error) {
             connectedSockets.delete(socket);
+            console.warn(error);
         }
     });
 }
@@ -108,7 +110,7 @@ export function initMockServer() {
     } catch (error) {
         // BroadcastChannel might not be available in some envs; fallback to storage events
         Channel = null;
-        console.warn("BroadcastChannel not available, falling back to storage events");
+        console.warn("BroadcastChannel not available, falling back to storage events", error);
         window.addEventListener("storage", (event) => {
             if (event.key === STORAGE_KEY && event.newValue) {
                 const parsed = JSON.parse(event.newValue);

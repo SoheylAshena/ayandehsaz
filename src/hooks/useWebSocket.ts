@@ -40,7 +40,7 @@ export function useWebSocket() {
                         dispatch(setProducts(msg.payload));
                     }
                 };
-            } catch (e) {
+            } catch (error) {
                 bcRef.current = null;
                 // fallback handled by storage events in server
                 window.addEventListener("storage", (event) => {
@@ -49,6 +49,7 @@ export function useWebSocket() {
                         dispatch(setProducts(parsed));
                     }
                 });
+                console.warn(error);
             }
         }
 
@@ -129,7 +130,7 @@ export function useWebSocket() {
           ⚜  Send data to WS server   ⚜     
     ╘═══════════════════════════════════════════════════════════════════════╛
     */
-    const send = (data: any) => {
+    const send = (data: unknown) => {
         const ws = wsRef.current;
         if (ws && ws.readyState === WebSocket.OPEN) {
             ws.send(JSON.stringify(data));

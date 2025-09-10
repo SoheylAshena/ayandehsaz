@@ -5,7 +5,7 @@ import type { Product } from "@/store/productsSlice";
 
 interface EditableProductProps {
     product: Product;
-    send?: (m: any) => void;
+    send?: (m: unknown) => void;
     onLocalUpdate: (p: Product) => void;
     onLocalDelete: (id: string) => void;
 }

@@ -1,5 +1,4 @@
 import ProductsList from "@/components/ProductList";
-import { useWebSocket } from "@/hooks/useWebSocket";
 
 export default function Page() {
     return (

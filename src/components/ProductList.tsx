@@ -8,7 +8,7 @@ import { useWebSocket } from "@/hooks/useWebSocket";
 
 interface ProductsListProps {
     admin?: boolean;
-    send?: (msg: any) => void;
+    send?: (msg: unknown) => void;
 }
 
 const ProductsList: React.FC<ProductsListProps> = ({ admin, send }) => {
