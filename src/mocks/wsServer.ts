@@ -7,8 +7,8 @@ import type { Product } from "@/store/productsSlice";
 ╘═══════════════════════════════════════════════════════════════════════╛
 */
 export const WS_URL = "ws://localhost:8080";
-const STORAGE_KEY = "mock_ws_products_v1";
-const BC_NAME = "mock-ws-channel";
+export const STORAGE_KEY = "mock_ws_products_v1";
+export const BC_NAME = "mock-ws-channel";
 
 let products: Product[] = [
     { id: "p1", title: "Blue T-Shirt", price: 19.99, stock: 10 },
@@ -54,10 +54,10 @@ function loadFromStorage() {
     }
 }
 
-/*   ⋆⋆⋆  BroadCasts to all connected sockets  ⋆⋆⋆
+/*   ⋆⋆⋆  Sync all connected sockets  ⋆⋆⋆
 If one connection gives an error, it gets deleted
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
-function broadcastToSockets() {
+function syncSockets() {
     const msg = JSON.stringify({ type: "SYNC", payload: products });
     Array.from(connectedSockets).forEach((socket) => {
         try {
@@ -78,7 +78,7 @@ function broadcastToTabs() {
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
 function broadcastSyncAll() {
     saveProductsToStorage();
-    broadcastToSockets();
+    syncSockets();
     broadcastToTabs();
 }
 
@@ -103,7 +103,7 @@ export function initMockServer() {
             if (msg && msg.type === "SYNC" && Array.isArray(msg.payload)) {
                 products = msg.payload;
                 saveProductsToStorage();
-                broadcastToSockets();
+                syncSockets();
             }
         };
     } catch (error) {
@@ -115,7 +115,7 @@ export function initMockServer() {
                 const parsed = JSON.parse(event.newValue);
                 if (Array.isArray(parsed)) {
                     products = parsed;
-                    broadcastToSockets();
+                    syncSockets();
                 }
             }
         });
@@ -131,7 +131,7 @@ export function initMockServer() {
     server.on("connection", (socket) => {
         connectedSockets.add(socket);
 
-        // send initial state to the connecting socket
+        // send product data to the connecting socket
         socket.send(JSON.stringify({ type: "SYNC", payload: products }));
 
         // remove on close
@@ -153,9 +153,7 @@ export function initMockServer() {
                     broadcastSyncAll();
                 } else if (type === "SYNC_REQUEST") {
                     // reply only to this socket
-                    try {
-                        socket.send(JSON.stringify({ type: "SYNC", payload: products }));
-                    } catch {}
+                    socket.send(JSON.stringify({ type: "SYNC", payload: products }));
                 }
             } catch (e) {
                 console.error("mock ws server parse error", e);
