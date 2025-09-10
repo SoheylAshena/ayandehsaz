@@ -43,20 +43,24 @@ const EditableProduct: React.FC<EditableProductProps> = ({ product, send, onLoca
     };
 
     return (
-        <div className="p-4 border rounded flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+        <div className="p-5  rounded flex flex-col bg-gray-100 md:flex-row md:items-center md:justify-between gap-3">
             <div className="flex-1">
                 {editing ? (
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-                        <input className="border p-2 w-full" value={title} onChange={(e) => setTitle(e.target.value)} />
                         <input
-                            className="border p-2 w-full"
+                            className="bg-white rounded-md p-2 w-full"
+                            value={title}
+                            onChange={(e) => setTitle(e.target.value)}
+                        />
+                        <input
+                            className="bg-white rounded-md p-2 w-full"
                             type="number"
-                            step="0.01"
+                            step="1"
                             value={price}
                             onChange={(e) => setPrice(e.target.value)}
                         />
                         <input
-                            className="border p-2 w-full"
+                            className="bg-white rounded-md p-2 w-full"
                             type="number"
                             value={stock}
                             onChange={(e) => setStock(e.target.value)}
@@ -75,11 +79,11 @@ const EditableProduct: React.FC<EditableProductProps> = ({ product, send, onLoca
             <div className="flex gap-2">
                 {editing ? (
                     <>
-                        <button className="px-3 py-1 border" onClick={save}>
+                        <button className="px-3 py-2 bg-green-300 rounded-md" onClick={save}>
                             Save
                         </button>
                         <button
-                            className="px-3 py-1 border"
+                            className="px-3 py-2 rounded-md bg-yellow-300"
                             onClick={() => {
                                 setEditing(false);
                                 setTitle(product.title);
@@ -92,10 +96,10 @@ const EditableProduct: React.FC<EditableProductProps> = ({ product, send, onLoca
                     </>
                 ) : (
                     <>
-                        <button className="px-3 py-1 border" onClick={() => setEditing(true)}>
+                        <button className="px-3 py-2 rounded-md bg-blue-300" onClick={() => setEditing(true)}>
                             Edit
                         </button>
-                        <button className="px-3 py-1 border text-red-600" onClick={remove}>
+                        <button className="px-3 py-2 rounded-md bg-red-300 " onClick={remove}>
                             Delete
                         </button>
                     </>

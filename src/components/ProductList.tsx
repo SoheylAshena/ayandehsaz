@@ -1,6 +1,5 @@
 "use client";
 
-import type { Product } from "@/store/productsSlice";
 import { useDispatch, useSelector } from "react-redux";
 import { updateProduct, deleteProduct } from "../store/productsSlice";
 import EditableProduct from "./EditableProduct";
@@ -20,7 +19,7 @@ const ProductsList: React.FC<ProductsListProps> = ({ admin, send }) => {
         return (
             <div className="grid gap-4">
                 {products.map((p) => (
-                    <div key={p.id} className="flex items-center justify-between p-4 border rounded">
+                    <div key={p.id} className="flex items-center justify-between p-4 bg-gray-100 rounded">
                         <div>
                             <div className="font-medium">{p.title}</div>
                             <div className="text-sm text-gray-500">
